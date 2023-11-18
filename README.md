@@ -19,3 +19,12 @@ git clone https://github.com/ggerganov/whisper.cpp.git
 ```
 
 支持的 http 链接 [见 yt-dlp](https://github.com/yt-dlp/yt-dlp/tree/master/yt_dlp/extractor) 、支持的参数选项 [见 whisper.cpp](https://github.com/ggerganov/whisper.cpp)
+
+# Docker
+
+```
+./docker/build.sh
+./docker/run.sh <video_file_or_http_link> [other_whisper_cpp_options]
+```
+
+注：mac m1 的 docker 中用不了 gpu (mps)，转录速度较慢
