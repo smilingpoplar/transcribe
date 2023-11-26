@@ -6,7 +6,7 @@ fi
 
 # 指定文件或http链接
 if [[ $1 =~ ^(http|https):// ]]; then
-    dir="videos"
+    dir="data.trans"
     mkdir -p $dir && cd $dir
     yt-dlp --extract-audio --audio-format wav --write-info-json "$1"
     title=$(jq -r .title *.info.json)
@@ -26,16 +26,20 @@ mv "$f.tmp.wav" "$f"
 
 # whisper转录
 shift # 将$1移出参数列表
-export GGML_METAL_PATH_RESOURCES="whisper.cpp/"
-bin/whisper-cpp -l auto -otxt -osrt -t 6 -m "whisper.cpp/models/ggml-medium-q5_0.bin" "$@" "$f"
+script_dir=$(dirname "$(realpath "$0")")
+export PATH="$script_dir/bin:$PATH"
+export GGML_METAL_PATH_RESOURCES="$script_dir/whisper.cpp/"
+model_name="medium-q5_0"
+model_path="$script_dir/whisper.cpp/models/ggml-$model_name.bin"
+whisper-cpp -l auto -otxt -osrt -t 6 -m "$model_path" "$@" "$f"
 rm "$f"
 
 # translate翻译
 if [ -e "$f.txt" ]; then
     echo "translating txt ..."
-    bin/translate < "$f.txt" > "$f.zh.txt"
+    translate < "$f.txt" > "$f.zh.txt"
 fi
 if [ -e "$f.srt" ]; then
     echo "translating srt ..."
-    bin/translate < "$f.srt" | sed 's/ --&gt; / --> /g' > "$f.zh.srt"
+    translate < "$f.srt" | sed 's/ --&gt; / --> /g' > "$f.zh.srt"
 fi
