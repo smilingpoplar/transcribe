@@ -5,11 +5,7 @@
 ### 安装
 
 ```
-brew install whisper-cpp ffmpeg
-brew install yt-dlp jq
-
-git clone https://github.com/ggerganov/whisper.cpp.git
-./whisper.cpp/models/download-ggml-model.sh medium-q5_0
+make install
 ```
 
 ### 转录出视频文本

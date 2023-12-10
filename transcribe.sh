@@ -27,5 +27,5 @@ mv "$f.tmp.wav" "$f"
 # whisper转录
 shift # 将$1移出参数列表
 export GGML_METAL_PATH_RESOURCES="whisper.cpp/"
-whisper-cpp -l auto -otxt -osrt -t 6 -m "whisper.cpp/models/ggml-medium-q5_0.bin" "$@" "$f"
+bin/whisper-cpp -l auto -otxt -osrt -t 6 -m "whisper.cpp/models/ggml-medium-q5_0.bin" "$@" "$f"
 rm "$f"
