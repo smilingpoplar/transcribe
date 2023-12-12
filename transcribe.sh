@@ -29,9 +29,9 @@ shift # 将$1移出参数列表
 script_dir=$(dirname "$(realpath "$0")")
 export PATH="$script_dir/bin:$PATH"
 export GGML_METAL_PATH_RESOURCES="$script_dir/whisper.cpp/"
-model_name="medium-q5_0"
+model_name="large-v2"
 model_path="$script_dir/whisper.cpp/models/ggml-$model_name.bin"
-whisper-cpp -l auto -otxt -osrt -t 6 -m "$model_path" "$@" "$f"
+whisper-cpp -l auto -otxt -osrt -t 6 -mc 32 -m "$model_path" "$@" "$f"
 rm "$f"
 
 # translate翻译
