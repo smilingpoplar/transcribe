@@ -43,3 +43,9 @@ if [ -e "$f.srt" ]; then
     echo "translating srt ..."
     translate < "$f.srt" | sed 's/ --&gt; / --> /g' > "$f.zh.srt"
 fi
+
+# edge-tts生成音频
+if [ -e "$f.zh.txt" ]; then
+    echo "generating tts ..."
+    edge-tts -v zh-CN-XiaoxiaoNeural --rate +100% -f "$f.zh.txt" --write-media "$f.tts.m4a" --write-subtitles "$f.tts.vtt"
+fi

@@ -1,4 +1,4 @@
-将视频、音频文件或 http 链接 => 中文 txt/srt
+将视频、音频文件或 http 链接 => 中文 txt/srt => 中文语音
 
 ## MacOS
 
@@ -8,7 +8,7 @@
 make install
 ```
 
-### 转录出视频文本
+### 转录出视频文本、生成中文语音
 
 ```
 ./transcribe.sh <video_file_or_http_link> [other_whisper_cpp_options]

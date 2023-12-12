@@ -30,4 +30,5 @@ install:
 	@mkdir -p bin/
 	cd whisper.cpp && make -j && cp main ../bin/whisper-cpp
 	GOBIN=`realpath bin/` go install github.com/smilingpoplar/translate/cmd/translate@latest
+	pip install edge-tts
 	$(call download_model,large-v2)
