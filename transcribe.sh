@@ -4,15 +4,29 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+# Ctrl+C时取消视频下载
+bg_pid=0
+cleanup() {
+    if [ $bg_pid -ne 0 ]; then
+        kill $bg_pid
+    fi
+}
+trap cleanup SIGINT
+
 # 指定文件或http链接
 if [[ $1 =~ ^(http|https):// ]]; then
     dir="data.trans"
     mkdir -p $dir && cd $dir
+    # 下载音频
     yt-dlp --extract-audio --audio-format wav --write-info-json "$1"
     title=$(jq -r .title *.info.json)
     rm *.info.json
     file="$title.wav"
     mv *\[*\].wav "$file"
+    # 下载视频
+    yt-dlp "$1" >/dev/null &
+    bg_pid=$!
+
     cd ..
     file="$dir/$file"
 else
