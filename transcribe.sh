@@ -55,7 +55,8 @@ if [ -e "$f.txt" ]; then
 fi
 if [ -e "$f.srt" ]; then
     echo "translating srt ..."
-    translate < "$f.srt" | sed 's/ --&gt; / --> /g' > "$f.zh.srt"
+    subtitle-translate -i "$f.srt" -o "$f.zh.srt"
+    subtitle-translate -i "$f.srt" -o "$f.en-zh.srt" -b
 fi
 
 # edge-tts生成音频
