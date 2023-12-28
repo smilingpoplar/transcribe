@@ -45,7 +45,7 @@ export PATH="$script_dir/bin:$PATH"
 export GGML_METAL_PATH_RESOURCES="$script_dir/whisper.cpp/"
 model_name="large-v2"
 model_path="$script_dir/whisper.cpp/models/ggml-$model_name.bin"
-whisper-cpp -l auto -otxt -osrt -t 6 -mc 32 -m "$model_path" "$@" "$f"
+whisper-cpp -l auto -otxt -osrt -t 6 -mc 32 --prompt "cut at sentence." -m "$model_path" "$@" "$f"
 rm "$f"
 
 # translate翻译
