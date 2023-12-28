@@ -10,6 +10,7 @@ cleanup() {
     if [ $bg_pid -ne 0 ]; then
         kill $bg_pid
     fi
+    exit
 }
 trap cleanup SIGINT
 
@@ -35,8 +36,10 @@ fi
 
 # ffmpeg预处理
 f=${file%.*} # 去除后缀
-ffmpeg -i "$file" -ar 16000 "$f.tmp.wav"
-mv "$f.tmp.wav" "$f"
+if [[ ! -f "$f" ]]; then
+    ffmpeg -i "$file" -ar 16000 "$f.tmp.wav"
+    mv "$f.tmp.wav" "$f"
+fi
 
 # whisper转录
 shift # 将$1移出参数列表
