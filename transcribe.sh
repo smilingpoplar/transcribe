@@ -16,7 +16,7 @@ trap cleanup SIGINT
 
 # 指定文件或http链接
 if [[ $1 =~ ^(http|https):// ]]; then
-    dir="data.trans"
+    dir="output.transcribe"
     mkdir -p $dir && cd $dir
     # 下载音频
     yt-dlp --extract-audio --audio-format wav --write-info-json "$1"
