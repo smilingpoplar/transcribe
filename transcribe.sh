@@ -18,14 +18,12 @@ trap cleanup SIGINT
 if [[ $1 =~ ^(http|https):// ]]; then
     dir="output.transcribe"
     mkdir -p $dir && cd $dir
+    title=$(yt-dlp --get-title "$1")
     # 下载音频
-    yt-dlp --extract-audio --audio-format wav --write-info-json "$1"
-    title=$(jq -r .title *.info.json)
-    rm *.info.json
     file="$title.wav"
-    mv *\[*\].wav "$file"
+    yt-dlp --extract-audio --audio-format wav -o "$file" "$1"
     # 下载视频
-    yt-dlp "$1" >/dev/null &
+    yt-dlp "$1" -o "$title.mkv" >/dev/null &
     bg_pid=$!
 
     cd ..
@@ -51,7 +49,7 @@ model_path="$script_dir/whisper.cpp/models/ggml-$model_name.bin"
 whisper-cpp -l auto -otxt -osrt -t 6 -mc 32 --prompt "cut at sentence." -m "$model_path" "$@" "$f"
 rm "$f"
 
-# translate翻译
+# translate字幕
 echo "translating srt ..."
 if [ -e "$f.txt" ]; then
     translate < "$f.txt" > "$f.zh.txt"
@@ -62,7 +60,10 @@ if [ -e "$f.srt" ]; then
 fi
 
 # edge-tts生成音频
-if [ -e "$f.zh.txt" ]; then
+if [ -e "$f.zh.srt" ]; then
     echo "generating tts ..."
-    edge-tts -v zh-CN-XiaoxiaoNeural -f "$f.zh.txt" --write-media "$f.tts.m4a" --write-subtitles "$f.tts.vtt"
+    edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "$f.zh.srt" "$f.zh.mp3"
 fi
+
+# 将音频合并到原视频
+ffmpeg -i "$f.mkv" -i "$f.zh.mp3" -map 0:v -map 0:a -map 1:a -c:v copy -c:a aac -disposition:a:1 default -disposition:a:0 none "$f.en-zh.mp4"
