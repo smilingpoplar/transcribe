@@ -52,12 +52,11 @@ whisper-cpp -l auto -otxt -osrt -t 6 -mc 32 --prompt "cut at sentence." -m "$mod
 rm "$f"
 
 # translate翻译
+echo "translating srt ..."
 if [ -e "$f.txt" ]; then
-    echo "translating txt ..."
     translate < "$f.txt" > "$f.zh.txt"
 fi
 if [ -e "$f.srt" ]; then
-    echo "translating srt ..."
     subtitle-translate -i "$f.srt" -o "$f.zh.srt"
     subtitle-translate -i "$f.srt" -o "$f.en-zh.srt" -b
 fi
@@ -65,5 +64,5 @@ fi
 # edge-tts生成音频
 if [ -e "$f.zh.txt" ]; then
     echo "generating tts ..."
-    edge-tts -v zh-CN-XiaoxiaoNeural --rate +100% -f "$f.zh.txt" --write-media "$f.tts.m4a" --write-subtitles "$f.tts.vtt"
+    edge-tts -v zh-CN-XiaoxiaoNeural -f "$f.zh.txt" --write-media "$f.tts.m4a" --write-subtitles "$f.tts.vtt"
 fi
