@@ -24,7 +24,6 @@ install:
 	$(call brew_install,ffmpeg)
 	$(call brew_install,pipx)
 	@pipx install yt-dlp
-	$(call brew_install,jq)
 	@if [ ! -d "whisper.cpp" ]; then \
 		git clone https://github.com/ggerganov/whisper.cpp.git; \
 	fi
