@@ -23,6 +23,7 @@ endef
 install:
 	$(call brew_install,ffmpeg)
 	$(call brew_install,pipx)
+	$(call brew_install,gsed)
 	@pipx install yt-dlp
 	@if [ ! -d "whisper.cpp" ]; then \
 		git clone https://github.com/ggerganov/whisper.cpp.git; \

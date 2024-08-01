@@ -84,6 +84,16 @@ translate_subtitles() {
 }
 translate_subtitles "$name"
 
+# 修复翻译用词
+fix_translation() {
+    if [ -f "$1" ]; then
+        gsed -i 's/法学硕士/LLM/g' "$1"
+    fi
+}
+fix_translation "$name.zh.txt"
+fix_translation "$name.zh.srt"
+fix_translation "$name.en-zh.srt"
+
 # edge-tts生成音频
 gen_tts() {
     if [ ! -f "$1.zh.mp3" ]; then
