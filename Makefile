@@ -33,4 +33,4 @@ install:
 	GOBIN=`realpath bin/` go install github.com/smilingpoplar/translate/cmd/translate@latest
 	GOBIN=`realpath bin/` go install github.com/smilingpoplar/subtitle-translate/cmd/subtitle-translate@latest
 	@pipx install edge-srt-to-speech
-	$(call download_model,large-v2)
+	$(call download_model,large-v3-turbo)
