@@ -18,9 +18,9 @@ trap cleanup SIGINT
 # 指定文件或http链接
 download_link() {
 	if [[ $1 =~ ^(http|https):// ]]; then
-		dir="output.transcribe"
-		mkdir -p $dir
 		local title=$(yt-dlp --get-title "$1" | sed 's/\//:/g')
+		dir="output.transcribe/$title"
+		mkdir -p "$dir"
 		file="$dir/$title.wav"
 
 		# 下载音频
@@ -88,9 +88,9 @@ translate_subtitles() {
 	if [ ! -f "$1.zh.srt" ]; then
 		echo "translating srt ..."
 		subtitle-translate -i "$1.srt" -o "$1.zh.srt" -a=false
-		subtitle-translate -i "$1.srt" -o "$1.zh-align.srt"
+		subtitle-translate -i "$1.srt" -o "$1.zh.align.srt"
 		subtitle-translate -i "$1.srt" -o "$1.en-zh.srt" -b -a=false
-		subtitle-translate -i "$1.srt" -o "$1.en-zh-align.srt" -b
+		subtitle-translate -i "$1.srt" -o "$1.en-zh.align.srt" -b
 	fi
 }
 translate_subtitles "$name"
@@ -99,32 +99,34 @@ translate_subtitles "$name"
 fix_translation() {
 	if [ -f "$1" ]; then
 		gsed -i 's/法学硕士/LLM/g' "$1"
+		gsed -i 's/变形金刚/transformer/g' "$1"
+		gsed -i 's/变压器/transformer/g' "$1"
 	fi
 }
 fix_translation "$name.zh.txt"
 fix_translation "$name.zh.srt"
-fix_translation "$name.zh-align.srt"
+fix_translation "$name.zh.align.srt"
 fix_translation "$name.en-zh.srt"
-fix_translation "$name.en-zh-align.srt"
+fix_translation "$name.en-zh.align.srt"
 
 # edge-tts生成音频
 gen_tts() {
 	if [ ! -f "$1.zh.mp3" ]; then
 		echo "generating tts ..."
 		edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "$1.zh.srt" "$1.zh.mp3"
-		edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "$1.zh-align.srt" "$1.zh-align.mp3"
+		edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "$1.zh.align.srt" "$1.zh.align.mp3"
 	fi
 }
 gen_tts "$name"
 
 # 将音频合并到原视频
 merge_tts_audio() {
-	if [ ! -f "$2.en-zh.webm" ]; then
+	if [ ! -f "$2.en-zh.mp4" ] && [ ! -f "$2.en-zh.webm" ]; then
 		if [ $bg_pid -ne 0 ]; then
 			wait $bg_pid # 等待视频下载完成
 		fi
 		echo "merging tts audio..."
-		ffmpeg -i "$1" -i "$2.zh.mp3" -i "$2.zh-align.mp3" -map 0:v -map 0:a -map 1:a -map 2:a -c:v copy -c:a aac -disposition:a:1 default -disposition:a:0 none -disposition:a:2 none "$2.en-zh.mp4"
+		ffmpeg -i "$1" -i "$2.zh.mp3" -i "$2.zh.align.mp3" -map 0:v -map 0:a -map 1:a -map 2:a -c:v copy -c:a aac -disposition:a:1 default -disposition:a:0 none -disposition:a:2 none "$2.en-zh.mp4"
 	fi
 }
 merge_tts_audio "${video_file:-$file}" "$name"
