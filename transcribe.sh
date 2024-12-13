@@ -63,7 +63,7 @@ whisper_transcribe() {
 		export GGML_METAL_PATH_RESOURCES="$script_dir/whisper.cpp/"
 		local model_name="large-v3-turbo"
 		local model_path="$script_dir/whisper.cpp/models/ggml-$model_name.bin"
-		whisper-cpp -l auto -otxt -osrt -t 6 -mc 32 --prompt "Hello." -m "$model_path" "$1" "$name"
+		whisper-cpp -l auto -otxt -osrt -t 6 --prompt "Hello." -m "$model_path" "$1" "$name"
 		rm "$name"
 	fi
 }
