@@ -114,6 +114,9 @@ gen_tts() {
 	if [ ! -f "$1.zh.mp3" ]; then
 		echo "generating tts ..."
 		edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "$1.zh.srt" "$1.zh.mp3"
+	fi
+	if [ ! -f "$1.zh.align.mp3" ]; then
+		echo "generating tts ..."
 		edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "$1.zh.align.srt" "$1.zh.align.mp3"
 	fi
 }

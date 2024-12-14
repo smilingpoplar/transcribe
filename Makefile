@@ -22,9 +22,9 @@ endef
 .PHONY: install
 install:
 	$(call brew_install,ffmpeg)
-	$(call brew_install,pipx)
+	$(call brew_install,uv)
 	$(call brew_install,gsed)
-	@pipx install yt-dlp
+	@uv tool install yt-dlp
 	@if [ ! -d "whisper.cpp" ]; then \
 		git clone https://github.com/ggerganov/whisper.cpp.git; \
 	fi
@@ -32,5 +32,5 @@ install:
 	cd whisper.cpp && make -j && cp main ../bin/whisper-cpp
 	GOBIN=`realpath bin/` go install github.com/smilingpoplar/translate/cmd/translate@latest
 	GOBIN=`realpath bin/` go install github.com/smilingpoplar/subtitle-translate/cmd/subtitle-translate@latest
-	@pipx install edge-srt-to-speech
+	@uv tool install edge-srt-to-speech
 	$(call download_model,large-v3-turbo)
