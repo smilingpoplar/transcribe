@@ -12,10 +12,13 @@ define brew_install
 endef
 
 define download_model
-	@if [ -f "whisper.cpp/models/ggml-$(1).bin" ]; then \
-		echo 模型ggml-$(1).bin已存在。\\n若模型下载曾中断，请到whisper.cpp/models/目录手动删除后重试。; \
+	@MODEL_PATH="whisper.cpp/models/"; \
+	MODEL_NAME="ggml-$(1).bin"; \
+	if [ -f "$${MODEL_PATH}$${MODEL_NAME}" ]; then \
+		echo 模型$${MODEL_NAME}已存在。\\n若模型下载曾中断，请到$${MODEL_PATH}目录手动删除后重试。; \
 	else \
-		whisper.cpp/models/download-ggml-model.sh $(1); \
+		mkdir -p $${MODEL_PATH}; \
+		whisper.cpp/models/download-ggml-model.sh $(1) $${MODEL_PATH}; \
 	fi
 endef
 
@@ -34,3 +37,4 @@ install:
 	GOBIN=`realpath bin/` go install github.com/smilingpoplar/subtitle-translate/cmd/subtitle-translate@latest
 	@uv tool install edge-srt-to-speech
 	$(call download_model,large-v3-turbo)
+	@uv sync
