@@ -12,7 +12,7 @@ define brew_install
 endef
 
 define download_model
-	@MODEL_PATH="whisper.cpp/models/"; \
+	@MODEL_PATH="$${HOME}/.cache/whisper-transcribe/models/"; \
 	MODEL_NAME="ggml-$(1).bin"; \
 	if [ -f "$${MODEL_PATH}$${MODEL_NAME}" ]; then \
 		echo 模型$${MODEL_NAME}已存在。\\n若模型下载曾中断，请到$${MODEL_PATH}目录手动删除后重试。; \

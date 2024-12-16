@@ -87,9 +87,8 @@ def whisper_transcribe(audio_file_16k: str, whisper_options: list[str]):
     os.environ["PATH"] = f"{script_dir}/bin:{os.environ["PATH"]}"
     if not Path(f"{audio_file_16k}.srt").exists():
         log("Whisper transcribing")
-        os.environ["GGML_METAL_PATH_RESOURCES"] = str(script_dir / "whisper.cpp")
         model_name = "large-v3-turbo"
-        model_path = script_dir / f"whisper.cpp/models/ggml-{model_name}.bin"
+        model_path = f"{os.environ["HOME"]}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
         run_cmd(
             f'whisper-cpp -l auto -otxt -osrt -t 6 --prompt "Hello." -m "{model_path}" '
             f'{" ".join(shlex.quote(arg) for arg in whisper_options)} "{audio_file_16k}"'
