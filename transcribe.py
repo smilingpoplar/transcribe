@@ -184,9 +184,7 @@ def merge_tts_audio(video_file: Path):
 
 def main():
     if len(sys.argv) < 2:
-        print(
-            "Usage: python transcribe.py <video_file_or_http_link> [other_whisper_cpp_options]"
-        )
+        print("Usage: transcribe <video_file_or_http_link> [other_whisper_cpp_options]")
         sys.exit(1)
 
     audio_file, video_file = download_link(sys.argv[1])

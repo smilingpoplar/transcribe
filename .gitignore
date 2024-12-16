@@ -1,3 +1,4 @@
 whisper.cpp/
-bin/
 output.transcribe/
+bin/
+!bin/*
