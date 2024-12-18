@@ -104,39 +104,29 @@ def fix_transcription(path: str):
 
 def translate_subtitles(name: str):
     """translate字幕"""
+    script_dir = Path(__file__).resolve().parent
+    fix_file = script_dir / "config/fixes.csv"
     frm, to = Path(f"{name}.txt"), Path(f"{name}.zh.txt")
     if not to.exists():
         log("Translating txt")
-        run_cmd(f'translate < "{frm}" > "{to}"')
+        run_cmd(f'translate -f "{fix_file}" < "{frm}" > "{to}"')
 
     frm, to = Path(f"{name}.srt"), Path(f"{name}.zh.srt")
     if not to.exists():
         log("Translating srt")
-        run_cmd(f'subtitle-translate -i "{frm}" -o "{to}" -a=false')
+        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}" -a=false')
 
     to = Path(f"{name}.zh.align.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -i "{frm}" -o "{to}"')
+        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}"')
 
     to = Path(f"{name}.en-zh.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -i "{frm}" -o "{to}" -b -a=false')
+        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}" -b -a=false')
 
     to = Path(f"{name}.en-zh.align.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -i "{frm}" -o "{to}" -b')
-
-
-def fix_translation(path: str):
-    """修复翻译用词"""
-    mapping = {
-        "法学硕士": "LLM",
-        "变形金刚": "transformer",
-        "变压器": "transformer",
-    }
-    if Path(path).exists():
-        for k, v in mapping.items():
-            run_cmd(f'gsed -i "s/{k}/{v}/g" "{path}"')
+        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}" -b')
 
 
 def gen_tts(name: str):
@@ -191,20 +181,7 @@ def main():
     ffmpeg_preprocess(audio_file)
     filename = str(audio_file.with_suffix(""))
     whisper_transcribe(filename, sys.argv[2:])
-
-    for ext in [".srt", ".txt"]:
-        fix_transcription(f"{filename}{ext}")
     translate_subtitles(filename)
-
-    for ext in [
-        ".zh.txt",
-        ".zh.srt",
-        ".zh.align.srt",
-        ".en-zh.srt",
-        ".en-zh.align.srt",
-    ]:
-        fix_translation(f"{filename}{ext}")
-
     gen_tts(filename)
     merge_tts_audio(video_file)
 
