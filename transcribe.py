@@ -84,11 +84,11 @@ def ffmpeg_preprocess(audio_file: Path):
 def whisper_transcribe(audio_file_16k: str, whisper_options: list[str]):
     """whisper转录"""
     script_dir = Path(__file__).resolve().parent
-    os.environ["PATH"] = f"{script_dir}/bin:{os.environ["PATH"]}"
+    os.environ["PATH"] = f"{script_dir}/bin:{os.environ['PATH']}"
     if not Path(f"{audio_file_16k}.srt").exists():
         log("Whisper transcribing")
         model_name = "large-v3-turbo"
-        model_path = f"{os.environ["HOME"]}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
+        model_path = f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
         run_cmd(
             f'whisper-cpp -l auto -otxt -osrt -t 6 --prompt "Hello." -m "{model_path}" '
             f'{" ".join(shlex.quote(arg) for arg in whisper_options)} "{audio_file_16k}"'
@@ -147,9 +147,8 @@ def gen_tts(name: str):
 
 def merge_tts_audio(video_file: Path):
     """将音频合并到原视频"""
-    for ext in [".mp4", ".mkv", ".webm"]:
-        if video_file.with_suffix(f".en-zh{ext}").exists():
-            return
+    if video_file.with_suffix(".en-zh.mp4").exists():
+        return
 
     global bg_process
     if bg_process:
@@ -167,7 +166,7 @@ def merge_tts_audio(video_file: Path):
     run_cmd(
         f'ffmpeg -i "{video_file}" -i "{video_file.with_suffix(".zh.mp3")}" -i "{video_file.with_suffix(".zh.align.mp3")}" '
         f"-map 0:v -map 0:a -map 1:a -map 2:a -c:v copy -c:a aac "
-        f"{" ".join(audio_channel_options)} "
+        f"{' '.join(audio_channel_options)} "
         f'"{video_file.with_suffix(".en-zh.mp4")}"'
     )
 
