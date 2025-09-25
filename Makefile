@@ -27,7 +27,7 @@ install:
 	$(call brew_install,ffmpeg)
 	$(call brew_install,uv)
 	$(call brew_install,gsed)
-	@uv tool install yt-dlp
+	@uv tool install -U "yt-dlp[default]"
 	@if [ ! -d "whisper.cpp" ]; then \
 		git clone https://github.com/ggerganov/whisper.cpp.git; \
 	fi
