@@ -107,7 +107,7 @@ def translate_subtitles(name: str):
     script_dir = Path(__file__).resolve().parent
     fix_file = script_dir / "config/fixes.csv"
     frm, to = Path(f"{name}.txt"), Path(f"{name}.zh.txt")
-    if not to.exists():
+    if frm.exists() and not to.exists():
         log("Translating txt")
         run_cmd(f'translate -f "{fix_file}" < "{frm}" > "{to}"')
 
