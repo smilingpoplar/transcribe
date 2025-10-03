@@ -107,26 +107,27 @@ def translate_subtitles(name: str):
     script_dir = Path(__file__).resolve().parent
     fix_file = script_dir / "config/fixes.csv"
     frm, to = Path(f"{name}.txt"), Path(f"{name}.zh.txt")
+    service = "siliconflow"
     if frm.exists() and not to.exists():
         log("Translating txt")
-        run_cmd(f'translate -f "{fix_file}" < "{frm}" > "{to}"')
+        run_cmd(f'translate -s {service} -f "{fix_file}" < "{frm}" > "{to}"')
 
     frm, to = Path(f"{name}.srt"), Path(f"{name}.zh.srt")
     if not to.exists():
         log("Translating srt")
-        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}" -a=false')
+        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -a=false')
 
     to = Path(f"{name}.zh.align.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}"')
+        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}"')
 
     to = Path(f"{name}.en-zh.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}" -b -a=false')
+        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b -a=false')
 
     to = Path(f"{name}.en-zh.align.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -f "{fix_file}" -i "{frm}" -o "{to}" -b')
+        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b')
 
 
 def gen_tts(name: str):
