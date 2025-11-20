@@ -90,7 +90,7 @@ def whisper_transcribe(audio_file_16k: str, whisper_options: list[str]):
         model_name = "large-v3-turbo"
         model_path = f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
         run_cmd(
-            f'whisper-cpp -l auto -otxt -osrt -t 6 --prompt "Hello." -m "{model_path}" '
+            f'whisper-cpp -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
             f'{" ".join(shlex.quote(arg) for arg in whisper_options)} "{audio_file_16k}"'
         )
         Path(audio_file_16k).unlink()
@@ -107,7 +107,7 @@ def translate_subtitles(name: str):
     script_dir = Path(__file__).resolve().parent
     fix_file = script_dir / "config/fixes.csv"
     frm, to = Path(f"{name}.txt"), Path(f"{name}.zh.txt")
-    service = "siliconflow"
+    service = "glm"
     if frm.exists() and not to.exists():
         log("Translating txt")
         run_cmd(f'translate -s {service} -f "{fix_file}" < "{frm}" > "{to}"')
@@ -115,7 +115,9 @@ def translate_subtitles(name: str):
     frm, to = Path(f"{name}.srt"), Path(f"{name}.zh.srt")
     if not to.exists():
         log("Translating srt")
-        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -a=false')
+        run_cmd(
+            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -a=false'
+        )
 
     to = Path(f"{name}.zh.align.srt")
     if not to.exists():
@@ -123,11 +125,15 @@ def translate_subtitles(name: str):
 
     to = Path(f"{name}.en-zh.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b -a=false')
+        run_cmd(
+            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b -a=false'
+        )
 
     to = Path(f"{name}.en-zh.align.srt")
     if not to.exists():
-        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b')
+        run_cmd(
+            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b'
+        )
 
 
 def gen_tts(name: str):
