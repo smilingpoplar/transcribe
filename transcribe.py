@@ -107,49 +107,31 @@ def translate_subtitles(name: str):
     script_dir = Path(__file__).resolve().parent
     fix_file = script_dir / "config/fixes.csv"
     frm, to = Path(f"{name}.txt"), Path(f"{name}.zh.txt")
-    service = "glm"
+    service = "siliconflow"
     if frm.exists() and not to.exists():
         log("Translating txt")
         run_cmd(f'translate -s {service} -f "{fix_file}" < "{frm}" > "{to}"')
 
     frm, to = Path(f"{name}.srt"), Path(f"{name}.zh.srt")
-    if not to.exists():
+    if frm.exists() and not to.exists():
         log("Translating srt")
         run_cmd(
-            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -a=false'
-        )
-
-    to = Path(f"{name}.zh.align.srt")
-    if not to.exists():
-        run_cmd(f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}"')
-
-    to = Path(f"{name}.en-zh.srt")
-    if not to.exists():
-        run_cmd(
-            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b -a=false'
-        )
-
-    to = Path(f"{name}.en-zh.align.srt")
-    if not to.exists():
-        run_cmd(
-            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -b'
+            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -ab'
         )
 
 
 def gen_tts(name: str):
     """edge-tts生成音频"""
-    tts_tasks = [
-        (".zh.srt", ".zh.mp3"),
-        (".zh.align.srt", ".zh.align.mp3"),
-    ]
-    for subtitle_ext, audio_ext in tts_tasks:
-        audio_file = Path(f"{name}{audio_ext}")
-        if not audio_file.exists():
-            log("Generating tts")
-            subtitle_file = f"{name}{subtitle_ext}"
-            run_cmd(
-                f'edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "{subtitle_file}" "{audio_file}"'
-            )
+    subtitle_ext = ".zh.srt"
+    frm = Path(f"{name}{subtitle_ext}")
+    audio_ext = os.path.splitext(subtitle_ext)[0] + ".mp3"
+    to = Path(f"{name}{audio_ext}")
+    if frm.exists() and not to.exists():
+        log("Generating tts")
+        subtitle_file = f"{name}{subtitle_ext}"
+        run_cmd(
+            f'edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "{subtitle_file}" "{to}"'
+        )
 
 
 def merge_tts_audio(video_file: Path):
@@ -163,17 +145,19 @@ def merge_tts_audio(video_file: Path):
         bg_process.wait()
 
     log("Merging tts audio")
-    total_audio_channels, default_audio_channel = 3, 2
-    audio_channel_options = [
-        f"-disposition:a:{i} default"
-        if i == default_audio_channel
-        else f"-disposition:a:{i} none"
-        for i in range(total_audio_channels)
-    ]
+
+    def get_audio_channel_options(total, default):
+        options = []
+        for i in range(total):
+            disposition = "default" if i == default else "none"
+            options.append(f"-map {i}:a -disposition:a:{i} {disposition}")
+        return " ".join(options)
+
     run_cmd(
-        f'ffmpeg -i "{video_file}" -i "{video_file.with_suffix(".zh.mp3")}" -i "{video_file.with_suffix(".zh.align.mp3")}" '
-        f"-map 0:v -map 0:a -map 1:a -map 2:a -c:v copy -c:a aac "
-        f"{' '.join(audio_channel_options)} "
+        f'ffmpeg -i "{video_file}" -i "{video_file.with_suffix(".zh.mp3")}" '
+        f"-map 0:v "
+        f"{get_audio_channel_options(2, 1)} "
+        f"-c:v copy -c:a aac "
         f'"{video_file.with_suffix(".en-zh.mp4")}"'
     )
 
