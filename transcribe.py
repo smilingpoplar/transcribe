@@ -1,10 +1,10 @@
 import os
 import re
 import shlex
+import shutil
 import signal
 import subprocess
 import sys
-import shutil
 from pathlib import Path
 
 
@@ -22,6 +22,7 @@ def run_cmd(cmd: str, capture_output: bool = False) -> str:
 
 
 bg_process = None
+
 
 def cleanup(signum, frame):
     """Ctrl+C时取消视频下载"""
@@ -81,6 +82,7 @@ def ffmpeg_preprocess(audio_file: Path):
         run_cmd(f'ffmpeg -i "{audio_file}" -ar 16000 "{tmp_file}"')
         tmp_file.rename(audio_file.with_suffix(""))
 
+
 def tool_transcribe(audio_file_16k: str, options: list[str]):
     if Path(f"{audio_file_16k}.srt").exists():
         return
@@ -92,6 +94,7 @@ def tool_transcribe(audio_file_16k: str, options: list[str]):
         parakeet_transcribe(audio_file_16k, options)
     else:
         whisper_transcribe(audio_file_16k, options)
+
 
 def parakeet_transcribe(audio_file_16k: str, options: list[str]):
     """parakeet转录"""
@@ -108,7 +111,9 @@ def whisper_transcribe(audio_file_16k: str, options: list[str]):
     """whisper转录"""
     log("Whisper transcribing")
     model_name = "large-v3-turbo"
-    model_path = f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
+    model_path = (
+        f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
+    )
     run_cmd(
         f'whisper-cpp -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
         f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file_16k}"'
@@ -184,7 +189,7 @@ def merge_tts_audio(video_file: Path):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: transcribe <video_file_or_http_link> [other_whisper_cpp_options]")
+        print("Usage: transcribe <video_file_or_http_link> [other_options]")
         sys.exit(1)
 
     audio_file, video_file = download_link(sys.argv[1])
