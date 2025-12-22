@@ -45,6 +45,7 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
         title: str = run_cmd(
             f'yt-dlp --get-title "{url_or_file}" | sed "s/\\//:/g"', capture_output=True
         )
+        os.chdir(Path.home() / "Downloads")
         dir: Path = Path(f"output.transcribe/{title}")
         dir.mkdir(parents=True, exist_ok=True)
         audio_file: Path = dir / f"{title}.wav"
