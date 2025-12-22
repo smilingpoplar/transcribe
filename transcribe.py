@@ -4,6 +4,7 @@ import shlex
 import signal
 import subprocess
 import sys
+import shutil
 from pathlib import Path
 
 
@@ -21,7 +22,6 @@ def run_cmd(cmd: str, capture_output: bool = False) -> str:
 
 
 bg_process = None
-
 
 def cleanup(signum, frame):
     """Ctrl+C时取消视频下载"""
@@ -80,20 +80,39 @@ def ffmpeg_preprocess(audio_file: Path):
         run_cmd(f'ffmpeg -i "{audio_file}" -ar 16000 "{tmp_file}"')
         tmp_file.rename(audio_file.with_suffix(""))
 
+def tool_transcribe(audio_file_16k: str, options: list[str]):
+    if Path(f"{audio_file_16k}.srt").exists():
+        return
 
-def whisper_transcribe(audio_file_16k: str, whisper_options: list[str]):
-    """whisper转录"""
     script_dir = Path(__file__).resolve().parent
     os.environ["PATH"] = f"{script_dir}/bin:{os.environ['PATH']}"
-    if not Path(f"{audio_file_16k}.srt").exists():
-        log("Whisper transcribing")
-        model_name = "large-v3-turbo"
-        model_path = f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
-        run_cmd(
-            f'whisper-cpp -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
-            f'{" ".join(shlex.quote(arg) for arg in whisper_options)} "{audio_file_16k}"'
-        )
-        Path(audio_file_16k).unlink()
+    parakeet_path = shutil.which("parakeet-mlx")
+    if parakeet_path:
+        parakeet_transcribe(audio_file_16k, options)
+    else:
+        whisper_transcribe(audio_file_16k, options)
+
+def parakeet_transcribe(audio_file_16k: str, options: list[str]):
+    """parakeet转录"""
+    log("parakeet transcribing")
+    audio_dir = Path(audio_file_16k).resolve().parent
+    run_cmd(
+        f'parakeet-mlx --output-dir "{audio_dir}" '
+        f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file_16k}"'
+    )
+    Path(audio_file_16k).unlink()
+
+
+def whisper_transcribe(audio_file_16k: str, options: list[str]):
+    """whisper转录"""
+    log("Whisper transcribing")
+    model_name = "large-v3-turbo"
+    model_path = f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
+    run_cmd(
+        f'whisper-cpp -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
+        f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file_16k}"'
+    )
+    Path(audio_file_16k).unlink()
 
 
 def fix_transcription(path: str):
@@ -170,7 +189,7 @@ def main():
     audio_file, video_file = download_link(sys.argv[1])
     ffmpeg_preprocess(audio_file)
     filename = str(audio_file.with_suffix(""))
-    whisper_transcribe(filename, sys.argv[2:])
+    tool_transcribe(filename, sys.argv[2:])
     translate_subtitles(filename)
     gen_tts(filename)
     merge_tts_audio(video_file)

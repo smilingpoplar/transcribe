@@ -37,6 +37,6 @@ install:
 	GOBIN=`realpath bin/` go install github.com/smilingpoplar/subtitle-translate/cmd/subtitle-translate@latest
 	@uv tool install edge-srt-to-speech
 	$(call download_model,large-v3-turbo)
-	@uv tool install --reinstall .
+	@uv tool install -e .
 	@uv tool update-shell
 	
