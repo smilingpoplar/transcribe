@@ -86,11 +86,11 @@ def ffmpeg_preprocess(audio_file: Path):
 
 
 def tool_transcribe(audio_file_16k: str, options: list[str]):
+    script_dir = Path(__file__).resolve().parent
+    os.environ["PATH"] = f"{script_dir}/bin:{os.environ['PATH']}"
     if Path(f"{audio_file_16k}.srt").exists():
         return
 
-    script_dir = Path(__file__).resolve().parent
-    os.environ["PATH"] = f"{script_dir}/bin:{os.environ['PATH']}"
     parakeet_path = shutil.which("parakeet-mlx")
     if parakeet_path:
         parakeet_transcribe(audio_file_16k, options)
@@ -155,32 +155,42 @@ def gen_tts(name: str):
         )
 
 
+def print_clickable_path(path: Path):
+    uri = path.resolve().as_uri()
+    # OSC 8 超链接转义序列格式:
+    # \033]8;; {URL} \033\\ {显示文字} \033]8;; \033\\
+    hyperlink = f"\033]8;;{uri}\033\\{path.name}\033]8;;\033\\"
+
+    log(f"请按住Cmd并点击下方路径进行播放：\n{hyperlink}")
+
+
 def merge_tts_audio(video_file: Path):
     """将音频合并到原视频"""
-    if video_file.with_suffix(".en-zh.mp4").exists():
-        return
+    target_file = video_file.with_suffix(".en-zh.mp4")
+    if not target_file.exists():
+        global bg_process
+        if bg_process:
+            log("Waiting for video download to finish")
+            bg_process.wait()
 
-    global bg_process
-    if bg_process:
-        log("Waiting for video download to finish")
-        bg_process.wait()
+        def get_audio_channel_options(total, default):
+            options = []
+            for i in range(total):
+                disposition = "default" if i == default else "none"
+                options.append(f"-map {i}:a -disposition:a:{i} {disposition}")
+            return " ".join(options)
 
-    log("Merging tts audio")
-
-    def get_audio_channel_options(total, default):
-        options = []
-        for i in range(total):
-            disposition = "default" if i == default else "none"
-            options.append(f"-map {i}:a -disposition:a:{i} {disposition}")
-        return " ".join(options)
-
-    run_cmd(
-        f'ffmpeg -i "{video_file}" -i "{video_file.with_suffix(".zh.mp3")}" '
-        f"-map 0:v "
-        f"{get_audio_channel_options(2, 1)} "
-        f"-c:v copy -c:a aac "
-        f'"{video_file.with_suffix(".en-zh.mp4")}"'
-    )
+        log("Merging tts audio")
+        tmp_file = video_file.with_suffix(".tmp.mp4")
+        run_cmd(
+            f'ffmpeg -y -i "{video_file}" -i "{video_file.with_suffix(".zh.mp3")}" '
+            f"-map 0:v "
+            f"{get_audio_channel_options(2, 1)} "
+            f"-c:v copy -c:a aac "
+            f'"{tmp_file}"'
+        )
+        shutil.move(tmp_file, target_file)
+    print_clickable_path(target_file)
 
 
 def main():
