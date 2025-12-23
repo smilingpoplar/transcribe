@@ -76,11 +76,13 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
 
 def ffmpeg_preprocess(audio_file: Path):
     """ffmpeg预处理"""
-    if not audio_file.with_suffix(".srt").exists():
-        log("FFmpeg preprocessing")
-        tmp_file = audio_file.with_suffix(".tmp.wav")
-        run_cmd(f'ffmpeg -i "{audio_file}" -ar 16000 "{tmp_file}"')
-        tmp_file.rename(audio_file.with_suffix(""))
+    if audio_file.with_suffix(".srt").exists():
+        return
+
+    log("FFmpeg preprocessing")
+    tmp_file = audio_file.with_suffix(".tmp.wav")
+    run_cmd(f'ffmpeg -i "{audio_file}" -ar 16000 "{tmp_file}"')
+    tmp_file.rename(audio_file.with_suffix(""))
 
 
 def tool_transcribe(audio_file_16k: str, options: list[str]):
@@ -121,16 +123,10 @@ def whisper_transcribe(audio_file_16k: str, options: list[str]):
     Path(audio_file_16k).unlink()
 
 
-def fix_transcription(path: str):
-    """修复转录结果"""
-    if Path(path).exists():
-        run_cmd(f'gsed -i "s/^ >>//g" "{path}"')
-
-
 def translate_subtitles(name: str):
     """translate字幕"""
     script_dir = Path(__file__).resolve().parent
-    fix_file = script_dir / "config/fixes.csv"
+    fix_file = script_dir / "config/fix.csv"
     frm, to = Path(f"{name}.txt"), Path(f"{name}.zh.txt")
     service = "siliconflow"
     if frm.exists() and not to.exists():
