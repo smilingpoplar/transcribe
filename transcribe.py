@@ -74,6 +74,30 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
     return audio_file, video_file
 
 
+def tool_transcribe(audio_file: Path, options: list[str]):
+    script_dir = Path(__file__).resolve().parent
+    os.environ["PATH"] = f"{script_dir}/bin:{os.environ['PATH']}"
+    if audio_file.with_suffix(".srt").exists():
+        return
+
+    parakeet_path = shutil.which("parakeet-mlx")
+    if parakeet_path:
+        parakeet_transcribe(audio_file, options)
+    else:
+        ffmpeg_preprocess(audio_file)
+        whisper_transcribe(audio_file.with_suffix(""), options)
+
+
+def parakeet_transcribe(audio_file: Path, options: list[str]):
+    """parakeet转录"""
+    log("parakeet transcribing")
+    audio_dir = audio_file.resolve().parent
+    run_cmd(
+        f'parakeet-mlx --output-dir "{audio_dir}" '
+        f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file}"'
+    )
+
+
 def ffmpeg_preprocess(audio_file: Path):
     """ffmpeg预处理"""
     if audio_file.with_suffix(".srt").exists():
@@ -85,31 +109,7 @@ def ffmpeg_preprocess(audio_file: Path):
     tmp_file.rename(audio_file.with_suffix(""))
 
 
-def tool_transcribe(audio_file_16k: str, options: list[str]):
-    script_dir = Path(__file__).resolve().parent
-    os.environ["PATH"] = f"{script_dir}/bin:{os.environ['PATH']}"
-    if Path(f"{audio_file_16k}.srt").exists():
-        return
-
-    parakeet_path = shutil.which("parakeet-mlx")
-    if parakeet_path:
-        parakeet_transcribe(audio_file_16k, options)
-    else:
-        whisper_transcribe(audio_file_16k, options)
-
-
-def parakeet_transcribe(audio_file_16k: str, options: list[str]):
-    """parakeet转录"""
-    log("parakeet transcribing")
-    audio_dir = Path(audio_file_16k).resolve().parent
-    run_cmd(
-        f'parakeet-mlx --output-dir "{audio_dir}" '
-        f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file_16k}"'
-    )
-    Path(audio_file_16k).unlink()
-
-
-def whisper_transcribe(audio_file_16k: str, options: list[str]):
+def whisper_transcribe(audio_file_16k: Path, options: list[str]):
     """whisper转录"""
     log("Whisper transcribing")
     model_name = "large-v3-turbo"
@@ -120,20 +120,21 @@ def whisper_transcribe(audio_file_16k: str, options: list[str]):
         f'whisper-cpp -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
         f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file_16k}"'
     )
-    Path(audio_file_16k).unlink()
+    audio_file_16k.unlink()
 
 
-def translate_subtitles(name: str):
+def translate_subtitles(audio_file: Path):
     """translate字幕"""
     script_dir = Path(__file__).resolve().parent
     fix_file = script_dir / "config/fix.csv"
-    frm, to = Path(f"{name}.txt"), Path(f"{name}.zh.txt")
     service = "siliconflow"
+
+    frm, to = audio_file.with_suffix(".txt"), audio_file.with_suffix(".zh.txt")
     if frm.exists() and not to.exists():
         log("Translating txt")
         run_cmd(f'translate -s {service} -f "{fix_file}" < "{frm}" > "{to}"')
 
-    frm, to = Path(f"{name}.srt"), Path(f"{name}.zh.srt")
+    frm, to = audio_file.with_suffix(".srt"), audio_file.with_suffix(".zh.srt")
     if frm.exists() and not to.exists():
         log("Translating srt")
         run_cmd(
@@ -141,18 +142,12 @@ def translate_subtitles(name: str):
         )
 
 
-def gen_tts(name: str):
+def gen_tts(audio_file: Path):
     """edge-tts生成音频"""
-    subtitle_ext = ".zh.srt"
-    frm = Path(f"{name}{subtitle_ext}")
-    audio_ext = os.path.splitext(subtitle_ext)[0] + ".mp3"
-    to = Path(f"{name}{audio_ext}")
+    frm, to = audio_file.with_suffix(".zh.srt"), audio_file.with_suffix(".zh.mp3")
     if frm.exists() and not to.exists():
         log("Generating tts")
-        subtitle_file = f"{name}{subtitle_ext}"
-        run_cmd(
-            f'edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "{subtitle_file}" "{to}"'
-        )
+        run_cmd(f'edge-srt-to-speech --voice zh-CN-XiaoxiaoNeural "{frm}" "{to}"')
 
 
 def print_clickable_path(path: Path):
@@ -199,11 +194,9 @@ def main():
         sys.exit(1)
 
     audio_file, video_file = download_link(sys.argv[1])
-    ffmpeg_preprocess(audio_file)
-    filename = str(audio_file.with_suffix(""))
-    tool_transcribe(filename, sys.argv[2:])
-    translate_subtitles(filename)
-    gen_tts(filename)
+    tool_transcribe(audio_file, sys.argv[2:])
+    translate_subtitles(audio_file)
+    gen_tts(audio_file)
     merge_tts_audio(video_file)
 
 
