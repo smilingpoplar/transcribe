@@ -126,19 +126,19 @@ def whisper_transcribe(audio_file_16k: Path, options: list[str]):
 def translate_subtitles(audio_file: Path):
     """translate字幕"""
     script_dir = Path(__file__).resolve().parent
-    fix_file = script_dir / "config/fix.csv"
+    glossary_file = script_dir / "config/glossary.csv"
     service = "siliconflow"
 
     frm, to = audio_file.with_suffix(".txt"), audio_file.with_suffix(".zh.txt")
     if frm.exists() and not to.exists():
         log("Translating txt")
-        run_cmd(f'translate -s {service} -f "{fix_file}" < "{frm}" > "{to}"')
+        run_cmd(f'translate -s {service} -g "{glossary_file}" < "{frm}" > "{to}"')
 
     frm, to = audio_file.with_suffix(".srt"), audio_file.with_suffix(".zh.srt")
     if frm.exists() and not to.exists():
         log("Translating srt")
         run_cmd(
-            f'subtitle-translate -s {service} -f "{fix_file}" -i "{frm}" -o "{to}" -ab'
+            f'subtitle-translate -s {service} -g "{glossary_file}" -i "{frm}" -o "{to}" -ab'
         )
 
 
