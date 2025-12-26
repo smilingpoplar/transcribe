@@ -15,10 +15,16 @@ def log(msg: str):
 
 def run_cmd(cmd: str, capture_output: bool = False) -> str:
     """运行命令并捕获输出（可选）"""
+    cmd = cmd.replace("$", "\\$")  # 转义$ 防止shell变量展开
     result = subprocess.run(cmd, shell=True, capture_output=capture_output, text=True)
     if result.returncode != 0:
         log(f"Error executing: {cmd}\n{result.stderr}")
     return result.stdout.strip() if capture_output else ""
+
+
+def run_cmd_in_background(cmd: str):
+    cmd = cmd.replace("$", "\\$")  # 转义$ 防止shell变量展开
+    return subprocess.Popen(cmd, shell=True)
 
 
 bg_process = None
@@ -44,8 +50,9 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
     """处理视频文件或http链接"""
     if re.match(r"^https?://", url_or_file):
         title: str = run_cmd(
-            f'yt-dlp --get-title "{url_or_file}" | sed "s/\\//:/g"', capture_output=True
-        )
+            f'yt-dlp --get-title "{url_or_file}"',
+            capture_output=True,
+        ).replace("/", ":")
         os.chdir(Path.home() / "Downloads")
         dir: Path = Path(f"output.transcribe/{title}")
         dir.mkdir(parents=True, exist_ok=True)
@@ -65,8 +72,8 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
         if not video_file.exists():
             log("Downloading video in background")
             global bg_process
-            bg_process = subprocess.Popen(
-                f'yt-dlp "{url_or_file}" -o "{video_file}"', shell=True
+            bg_process = run_cmd_in_background(
+                f'yt-dlp "{url_or_file}" -o "{video_file}"'
             )
     else:
         video_file = audio_file = Path(url_or_file)
