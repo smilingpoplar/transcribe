@@ -100,7 +100,7 @@ def parakeet_transcribe(audio_file: Path, options: list[str]):
     log("parakeet transcribing")
     audio_dir = audio_file.resolve().parent
     run_cmd(
-        f'parakeet-mlx --output-dir "{audio_dir}" '
+        f'parakeet-mlx --max-duration 10 --output-dir "{audio_dir}" '
         f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file}"'
     )
 
@@ -124,7 +124,7 @@ def whisper_transcribe(audio_file_16k: Path, options: list[str]):
         f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
     )
     run_cmd(
-        f'whisper-cpp -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
+        f'whisper-cpp -ml 200 -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
         f'{" ".join(shlex.quote(arg) for arg in options)} "{audio_file_16k}"'
     )
     audio_file_16k.unlink()
