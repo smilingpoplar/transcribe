@@ -49,8 +49,9 @@ signal.signal(signal.SIGINT, cleanup)
 def download_link(url_or_file: str) -> tuple[Path, Path]:
     """处理视频文件或http链接"""
     if re.match(r"^https?://", url_or_file):
+        yt = "yt-dlp --cookies-from-browser chrome"
         title: str = run_cmd(
-            f'yt-dlp --get-title "{url_or_file}"',
+            f'{yt} --get-title "{url_or_file}"',
             capture_output=True,
         ).replace("/", ":")
         os.chdir(Path.home() / "Downloads")
@@ -61,11 +62,11 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
         if not audio_file.exists():
             log("Downloading audio")
             run_cmd(
-                f'yt-dlp --extract-audio --audio-format wav -o "{audio_file}" "{url_or_file}"'
+                f'{yt} --extract-audio --audio-format wav -o "{audio_file}" "{url_or_file}"'
             )
 
         ext: str = run_cmd(
-            f'yt-dlp --get-filename "{url_or_file}"', capture_output=True
+            f'{yt} --get-filename "{url_or_file}"', capture_output=True
         ).split(".")[-1]
         video_file = dir / f"{title}.{ext}"
 
@@ -73,7 +74,7 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
             log("Downloading video in background")
             global bg_process
             bg_process = run_cmd_in_background(
-                f'yt-dlp "{url_or_file}" -o "{video_file}"'
+                f'{yt} "{url_or_file}" -o "{video_file}"'
             )
     else:
         video_file = audio_file = Path(url_or_file)
