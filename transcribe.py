@@ -13,18 +13,35 @@ def log(msg: str):
     print(f"[transcribe] {msg}")
 
 
-def run_cmd(cmd: str, capture_output: bool = False) -> str:
-    """运行命令并捕获输出（可选）"""
-    cmd = cmd.replace("$", "\\$")  # 转义$ 防止shell变量展开
-    result = subprocess.run(cmd, shell=True, capture_output=capture_output, text=True)
+def kill_process_tree(proc):
+    if proc and proc.poll() is None:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+
+
+def run_cmd(cmd: str, shell: bool = False, capture_output: bool = False) -> str:
+    """运行命令（支持可选 shell）"""
+    result = subprocess.run(
+        cmd if shell else shlex.split(cmd),
+        shell=shell,
+        capture_output=capture_output,
+        text=True,
+        start_new_session=True,
+    )
+
     if result.returncode != 0:
         log(f"Error executing: {cmd}\n{result.stderr}")
-    return result.stdout.strip() if capture_output else ""
+
+    return result.stdout.strip() if capture_output and result.stdout else ""
 
 
 def run_cmd_in_background(cmd: str):
-    cmd = cmd.replace("$", "\\$")  # 转义$ 防止shell变量展开
-    return subprocess.Popen(cmd, shell=True)
+    return subprocess.Popen(
+        shlex.split(cmd),
+        start_new_session=True,
+    )
 
 
 bg_process = None
@@ -34,11 +51,7 @@ def cleanup(signum, frame):
     """Ctrl+C时取消视频下载"""
     global bg_process
     if bg_process and bg_process.poll() is None:  # 后台进程正在运行
-        bg_process.terminate()
-        try:
-            bg_process.wait(timeout=5)  # 等待后台进程安全退出
-        except subprocess.TimeoutExpired:
-            bg_process.kill()
+        kill_process_tree(bg_process)
         log("Downloading video canceled")
     sys.exit(0)
 
@@ -140,7 +153,10 @@ def translate_subtitles(audio_file: Path):
     frm, to = audio_file.with_suffix(".txt"), audio_file.with_suffix(".zh.txt")
     if frm.exists() and not to.exists():
         log("Translating txt")
-        run_cmd(f'translate -s {service} -g "{glossary_file}" < "{frm}" > "{to}"')
+        run_cmd(
+            f'translate -s {service} -g "{glossary_file}" < "{frm}" > "{to}"',
+            shell=True,
+        )
 
     frm, to = audio_file.with_suffix(".srt"), audio_file.with_suffix(".zh.srt")
     if frm.exists() and not to.exists():
