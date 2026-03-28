@@ -67,8 +67,8 @@ def download_link(url_or_file: str) -> tuple[Path, Path]:
             f'{yt} --get-title "{url_or_file}"',
             capture_output=True,
         ).replace("/", ":")
-        os.chdir(Path.home() / "Downloads")
-        dir: Path = Path(f"output.transcribe/{title}")
+        base_dir = Path.home() / "Downloads" / "output.transcribe"
+        dir: Path = base_dir / title
         dir.mkdir(parents=True, exist_ok=True)
         audio_file: Path = dir / f"{title}.wav"
 
@@ -135,7 +135,11 @@ def whisper_transcribe(audio_file_16k: Path, options: list[str]):
     log("Whisper transcribing")
     model_name = "large-v3-turbo"
     model_path = (
-        f"{os.environ['HOME']}/.cache/whisper-transcribe/models/ggml-{model_name}.bin"
+        Path.home()
+        / ".cache"
+        / "whisper-transcribe"
+        / "models"
+        / f"ggml-{model_name}.bin"
     )
     run_cmd(
         f'whisper-cpp -ml 200 -l auto -osrt -t 6 --prompt "Hello." -m "{model_path}" '
