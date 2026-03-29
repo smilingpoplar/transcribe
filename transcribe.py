@@ -157,10 +157,7 @@ def translate_subtitles(audio_file: Path):
     frm, to = audio_file.with_suffix(".txt"), audio_file.with_suffix(".zh.txt")
     if frm.exists() and not to.exists():
         log("Translating txt")
-        run_cmd(
-            f'translate -s {service} -g "{glossary_file}" < "{frm}" > "{to}"',
-            shell=True,
-        )
+        run_cmd(f'translate -s {service} -g "{glossary_file}" -i "{frm}" -o "{to}"')
 
     frm, to = audio_file.with_suffix(".srt"), audio_file.with_suffix(".zh.srt")
     if frm.exists() and not to.exists():
