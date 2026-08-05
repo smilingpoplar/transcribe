@@ -51,9 +51,9 @@ install-common:
 	$(call brew_install,uv)
 	$(call brew_install,gsed)
 	@uv tool install -U "yt-dlp[default]"
-	@mkdir -p bin/
-	@GOBIN=`realpath bin/` go install github.com/smilingpoplar/translate/cmd/translate@latest
-	@GOBIN=`realpath bin/` go install github.com/smilingpoplar/subtitle-translate/cmd/subtitle-translate@latest
+	@mkdir -p transcribe/bin/
+	@GOBIN=`realpath transcribe/bin/` go install github.com/smilingpoplar/translate/cmd/translate@latest
+	@GOBIN=`realpath transcribe/bin/` go install github.com/smilingpoplar/subtitle-translate/cmd/subtitle-translate@latest
 	@uv tool install edge-srt-to-speech
 	@uv tool install -e .
 
@@ -67,7 +67,7 @@ install-nomlx:
 	@if [ ! -d "whisper.cpp" ]; then \
 		git clone https://github.com/ggerganov/whisper.cpp.git; \
 	fi
-	@mkdir -p bin/
-	cd whisper.cpp && make -j && cp main ../bin/whisper-cpp
+	@mkdir -p transcribe/bin/
+	cd whisper.cpp && make -j && cp main ../transcribe/bin/whisper-cpp
 	$(call download_model,large-v3-turbo)
 	

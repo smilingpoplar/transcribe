@@ -1,5 +1,4 @@
 whisper.cpp/
 output.transcribe/
-bin/
-!bin/*
+transcribe/bin/
 __pycache__
